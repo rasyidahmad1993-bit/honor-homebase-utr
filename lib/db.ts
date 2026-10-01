@@ -1,0 +1,74 @@
+import { neon } from "@neondatabase/serverless";
+
+export interface DosenRow {
+  id: number;
+  nama: string;
+  pendidikan: "S2" | "S3";
+  jabatan: "AA" | "Lektor" | "LK" | "Prof";
+  tahun_mengabdi: number;
+  created_at: string;
+}
+
+function getSql() {
+  const url =
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_URL ||
+    process.env.POSTGRES_URL_NON_POOLING;
+  if (!url) {
+    throw new Error(
+      "Database belum terhubung. Set DATABASE_URL / POSTGRES_URL (lihat README untuk setup Vercel Postgres)."
+    );
+  }
+  return neon(url);
+}
+
+let initialized = false;
+
+export async function ensureSchema() {
+  if (initialized) return;
+  const sql = getSql();
+  await sql`
+    CREATE TABLE IF NOT EXISTS dosen (
+      id SERIAL PRIMARY KEY,
+      nama TEXT NOT NULL,
+      pendidikan TEXT NOT NULL CHECK (pendidikan IN ('S2','S3')),
+      jabatan TEXT NOT NULL CHECK (jabatan IN ('AA','Lektor','LK','Prof')),
+      tahun_mengabdi INTEGER NOT NULL CHECK (tahun_mengabdi >= 0),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `;
+  initialized = true;
+}
+
+export async function listDosen(): Promise<DosenRow[]> {
+  await ensureSchema();
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT id, nama, pendidikan, jabatan, tahun_mengabdi, created_at
+    FROM dosen
+    ORDER BY created_at DESC;
+  `) as DosenRow[];
+  return rows;
+}
+
+export async function createDosen(data: {
+  nama: string;
+  pendidikan: "S2" | "S3";
+  jabatan: "AA" | "Lektor" | "LK" | "Prof";
+  tahunMengabdi: number;
+}): Promise<DosenRow> {
+  await ensureSchema();
+  const sql = getSql();
+  const rows = (await sql`
+    INSERT INTO dosen (nama, pendidikan, jabatan, tahun_mengabdi)
+    VALUES (${data.nama}, ${data.pendidikan}, ${data.jabatan}, ${data.tahunMengabdi})
+    RETURNING id, nama, pendidikan, jabatan, tahun_mengabdi, created_at;
+  `) as DosenRow[];
+  return rows[0];
+}
+
+export async function deleteDosen(id: number): Promise<void> {
+  await ensureSchema();
+  const sql = getSql();
+  await sql`DELETE FROM dosen WHERE id = ${id};`;
+}
