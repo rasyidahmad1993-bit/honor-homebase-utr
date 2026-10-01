@@ -36,3 +36,5 @@ npm run dev
 
 Tarif per pertemuan dan honor homebase lama ada di `lib/calc.ts`, variabel `TARIF`.
 Ubah angkanya di situ kalau ada SK baru, lalu push ke GitHub — Vercel build ulang otomatis.
+
+<!-- trigger deploy -->
