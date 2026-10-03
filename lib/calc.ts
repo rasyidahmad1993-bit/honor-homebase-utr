@@ -78,18 +78,21 @@ export function hitungHonorHomebase(input: CalcInput): CalcResult {
 
   const ajarLama = M_LAMA * tarif;
   const ajarBaru = M_BARU * tarif;
+  const takeHomeLama = hbLama + ajarLama;
 
   const g = tahunMengabdi > TENURE_THRESHOLD_YEARS ? targetKenaikan : 0;
   const premiMasaKerja = Math.min(tahunMengabdi, TENURE_CAP_YEARS) * TENURE_RATE;
 
-  const hbBaseSerapan = hbLama + (ajarLama - ajarBaru);
-  const hbBaruRaw = hbBaseSerapan * (1 + g);
-  const hbBaru = Math.ceil(hbBaruRaw / ROUND) * ROUND + premiMasaKerja;
+  // Kenaikan % dihitung dari TOTAL TAKE-HOME PAY lama (homebase + mengajar), bukan dari
+  // homebase saja — supaya kenaikan yang dirasakan dosen benar-benar sebesar target yang
+  // dipilih, bukan persentase kecil dari basis homebase yang kecil.
+  const targetTakeHomeBaru = takeHomeLama * (1 + g);
+  const hbBaruRaw = targetTakeHomeBaru - ajarBaru;
+  const hbBaru = Math.max(0, Math.ceil(hbBaruRaw / ROUND) * ROUND) + premiMasaKerja;
 
   const kenaikanHbRp = hbBaru - hbLama;
   const kenaikanHbPct = hbLama ? kenaikanHbRp / hbLama : 0;
 
-  const takeHomeLama = hbLama + ajarLama;
   const takeHomeBaru = hbBaru + ajarBaru;
   const deltaTakeHomeRp = takeHomeBaru - takeHomeLama;
   const deltaTakeHomePct = takeHomeLama ? deltaTakeHomeRp / takeHomeLama : 0;
