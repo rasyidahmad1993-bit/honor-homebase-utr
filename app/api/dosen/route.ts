@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createDosen, listDosen } from "@/lib/db";
-import { Jabatan, Pendidikan } from "@/lib/calc";
+import { Jabatan, Pendidikan, Tingkatan } from "@/lib/calc";
 
 const JABATAN_VALUES: Jabatan[] = ["TP", "AA", "Lektor", "LK", "Prof"];
 const PENDIDIKAN_VALUES: Pendidikan[] = ["S2", "S3"];
+const TINGKATAN_VALUES: Tingkatan[] = ["Pimpinan", "Staff", "Dosen", "DosenTidakTetap"];
 
 export async function GET() {
   try {
@@ -24,6 +25,7 @@ export async function POST(req: NextRequest) {
     const nama = String(body.nama ?? "").trim();
     const pendidikan = body.pendidikan as Pendidikan;
     const jabatan = body.jabatan as Jabatan;
+    const tingkatan = body.tingkatan as Tingkatan;
     const tahunMengabdi = Number(body.tahunMengabdi);
 
     if (!nama) {
@@ -35,6 +37,9 @@ export async function POST(req: NextRequest) {
     if (!JABATAN_VALUES.includes(jabatan)) {
       return NextResponse.json({ error: "Jabatan fungsional tidak valid." }, { status: 400 });
     }
+    if (!TINGKATAN_VALUES.includes(tingkatan)) {
+      return NextResponse.json({ error: "Tingkatan tidak valid." }, { status: 400 });
+    }
     if (!Number.isFinite(tahunMengabdi) || tahunMengabdi < 0 || tahunMengabdi > 60) {
       return NextResponse.json({ error: "Lama mengabdi tidak valid." }, { status: 400 });
     }
@@ -43,6 +48,7 @@ export async function POST(req: NextRequest) {
       nama,
       pendidikan: jabatan === "Prof" ? "S3" : pendidikan,
       jabatan,
+      tingkatan,
       tahunMengabdi,
     });
     return NextResponse.json({ data: row }, { status: 201 });

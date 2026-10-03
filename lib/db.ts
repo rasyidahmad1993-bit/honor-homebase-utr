@@ -5,6 +5,7 @@ export interface DosenRow {
   nama: string;
   pendidikan: "S2" | "S3";
   jabatan: "TP" | "AA" | "Lektor" | "LK" | "Prof";
+  tingkatan: "Pimpinan" | "Staff" | "Dosen" | "DosenTidakTetap";
   tahun_mengabdi: number;
   created_at: string;
 }
@@ -33,6 +34,7 @@ export async function ensureSchema() {
       nama TEXT NOT NULL,
       pendidikan TEXT NOT NULL CHECK (pendidikan IN ('S2','S3')),
       jabatan TEXT NOT NULL CHECK (jabatan IN ('TP','AA','Lektor','LK','Prof')),
+      tingkatan TEXT NOT NULL DEFAULT 'Dosen' CHECK (tingkatan IN ('Pimpinan','Staff','Dosen','DosenTidakTetap')),
       tahun_mengabdi INTEGER NOT NULL CHECK (tahun_mengabdi >= 0),
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
@@ -40,6 +42,10 @@ export async function ensureSchema() {
   // Migrasi untuk database yang sudah ada sebelum jabatan "TP" ditambahkan.
   await sql`ALTER TABLE dosen DROP CONSTRAINT IF EXISTS dosen_jabatan_check;`;
   await sql`ALTER TABLE dosen ADD CONSTRAINT dosen_jabatan_check CHECK (jabatan IN ('TP','AA','Lektor','LK','Prof'));`;
+  // Migrasi untuk database yang sudah ada sebelum kolom "tingkatan" ditambahkan.
+  await sql`ALTER TABLE dosen ADD COLUMN IF NOT EXISTS tingkatan TEXT NOT NULL DEFAULT 'Dosen';`;
+  await sql`ALTER TABLE dosen DROP CONSTRAINT IF EXISTS dosen_tingkatan_check;`;
+  await sql`ALTER TABLE dosen ADD CONSTRAINT dosen_tingkatan_check CHECK (tingkatan IN ('Pimpinan','Staff','Dosen','DosenTidakTetap'));`;
   initialized = true;
 }
 
@@ -47,7 +53,7 @@ export async function listDosen(): Promise<DosenRow[]> {
   await ensureSchema();
   const sql = getSql();
   const rows = (await sql`
-    SELECT id, nama, pendidikan, jabatan, tahun_mengabdi, created_at
+    SELECT id, nama, pendidikan, jabatan, tingkatan, tahun_mengabdi, created_at
     FROM dosen
     ORDER BY created_at DESC;
   `) as DosenRow[];
@@ -58,14 +64,15 @@ export async function createDosen(data: {
   nama: string;
   pendidikan: "S2" | "S3";
   jabatan: "TP" | "AA" | "Lektor" | "LK" | "Prof";
+  tingkatan: "Pimpinan" | "Staff" | "Dosen" | "DosenTidakTetap";
   tahunMengabdi: number;
 }): Promise<DosenRow> {
   await ensureSchema();
   const sql = getSql();
   const rows = (await sql`
-    INSERT INTO dosen (nama, pendidikan, jabatan, tahun_mengabdi)
-    VALUES (${data.nama}, ${data.pendidikan}, ${data.jabatan}, ${data.tahunMengabdi})
-    RETURNING id, nama, pendidikan, jabatan, tahun_mengabdi, created_at;
+    INSERT INTO dosen (nama, pendidikan, jabatan, tingkatan, tahun_mengabdi)
+    VALUES (${data.nama}, ${data.pendidikan}, ${data.jabatan}, ${data.tingkatan}, ${data.tahunMengabdi})
+    RETURNING id, nama, pendidikan, jabatan, tingkatan, tahun_mengabdi, created_at;
   `) as DosenRow[];
   return rows[0];
 }

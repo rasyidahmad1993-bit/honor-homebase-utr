@@ -5,6 +5,9 @@ import {
   Jabatan,
   JABATAN_LABEL,
   Pendidikan,
+  Tingkatan,
+  TINGKATAN_LABEL,
+  PERTEMUAN_PER_MINGGU,
   fmtRupiah,
   hitungHonorHomebase,
 } from "@/lib/calc";
@@ -14,6 +17,7 @@ interface Dosen {
   nama: string;
   pendidikan: Pendidikan;
   jabatan: Jabatan;
+  tingkatan: Tingkatan;
   tahun_mengabdi: number;
   created_at: string;
 }
@@ -30,6 +34,7 @@ export default function Page() {
   const [nama, setNama] = useState("");
   const [pendidikan, setPendidikan] = useState<Pendidikan>("S2");
   const [jabatan, setJabatan] = useState<Jabatan>("AA");
+  const [tingkatan, setTingkatan] = useState<Tingkatan>("Dosen");
   const [tahun, setTahun] = useState(5);
 
   async function load() {
@@ -63,6 +68,7 @@ export default function Page() {
           nama,
           pendidikan,
           jabatan,
+          tingkatan,
           tahunMengabdi: tahun,
         }),
       });
@@ -96,6 +102,7 @@ export default function Page() {
         calc: hitungHonorHomebase({
           pendidikan: d.pendidikan,
           jabatan: d.jabatan,
+          tingkatan: d.tingkatan,
           tahunMengabdi: d.tahun_mengabdi,
           targetKenaikan: kenaikan,
         }),
@@ -108,9 +115,12 @@ export default function Page() {
       <div>
         <h1>Penentuan Honor Dosen Tetap</h1>
         <p className="sub">
-          Database dosen struktural & kalkulator honor homebase semester depan (24 pertemuan/bulan dikunci,
-          honor mengajar yang berkurang dialihkan ke homebase, ditambah kenaikan untuk &gt;3 tahun mengabdi
-          dan premi masa kerja Rp50.000/tahun, maks 20 tahun).
+          Database dosen & kalkulator honor homebase semester depan. Kuota pertemuan yang
+          dibayar/bulan ditentukan oleh <b>Tingkatan</b> (Pimpinan 6/minggu, Staff/Dosen/Dosen
+          Tidak Tetap 4/minggu); tarif &amp; honor homebase lama ditentukan oleh{" "}
+          <b>Jabatan Fungsional</b>. Honor mengajar yang berkurang dialihkan ke homebase, ditambah
+          kenaikan untuk &gt;3 tahun mengabdi dan premi masa kerja Rp50.000/tahun (maks 20 tahun).
+          Dosen Tidak Tetap tidak mendapat homebase, premi, maupun kenaikan %.
         </p>
       </div>
 
@@ -127,6 +137,20 @@ export default function Page() {
               placeholder="Nama lengkap"
               required
             />
+          </div>
+          <div>
+            <label htmlFor="tingkatan">Tingkatan</label>
+            <select
+              id="tingkatan"
+              value={tingkatan}
+              onChange={(e) => setTingkatan(e.target.value as Tingkatan)}
+            >
+              {(Object.keys(TINGKATAN_LABEL) as Tingkatan[]).map((t) => (
+                <option key={t} value={t}>
+                  {TINGKATAN_LABEL[t]} ({PERTEMUAN_PER_MINGGU[t]} pert./minggu)
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label htmlFor="jabatan">Jabatan fungsional</label>
@@ -207,9 +231,11 @@ export default function Page() {
               <thead>
                 <tr>
                   <th>Nama</th>
+                  <th>Tingkatan</th>
                   <th>Jabatan</th>
                   <th>Pend.</th>
                   <th>Masa kerja</th>
+                  <th>Kuota baru/bln</th>
                   <th>Homebase lama</th>
                   <th>Homebase baru</th>
                   <th>Take-home lama</th>
@@ -222,15 +248,18 @@ export default function Page() {
                 {rows.map(({ d, calc }) => (
                   <tr key={d.id}>
                     <td>{d.nama}</td>
+                    <td>{TINGKATAN_LABEL[d.tingkatan]}</td>
                     <td>{JABATAN_LABEL[d.jabatan]}</td>
                     <td>{d.jabatan === "Prof" ? "—" : d.pendidikan}</td>
                     <td className="num">{d.tahun_mengabdi} th</td>
+                    <td className="num">{calc.mBaru} pert.</td>
                     <td className="num">{fmtRupiah(calc.hbLama)}</td>
                     <td className="num">{fmtRupiah(calc.hbBaru)}</td>
                     <td className="num">{fmtRupiah(calc.takeHomeLama)}</td>
                     <td className="num">{fmtRupiah(calc.takeHomeBaru)}</td>
                     <td className="num good">
-                      +{fmtRupiah(calc.deltaTakeHomeRp)} ({(calc.deltaTakeHomePct * 100).toFixed(1)}%)
+                      {calc.deltaTakeHomeRp >= 0 ? "+" : ""}
+                      {fmtRupiah(calc.deltaTakeHomeRp)} ({(calc.deltaTakeHomePct * 100).toFixed(1)}%)
                     </td>
                     <td>
                       <button className="btn-ghost" onClick={() => handleDelete(d.id)}>
@@ -246,11 +275,17 @@ export default function Page() {
       </section>
 
       <p className="note">
-        <b>Asumsi tetap:</b> 12 kelas × 16 pertemuan / 6 bulan = 32 pertemuan dibayar/bulan pada aturan
-        lama; aturan baru 6 pertemuan/minggu × 4 minggu = 24 pertemuan/bulan; tarif & honor homebase lama
-        dari SK 001/SK/11/UTR/X/2021. Dosen &gt;3 tahun mengabdi dapat kenaikan persentase penuh; ≤3 tahun
-        hanya homebase impas. Premi masa kerja Rp50.000/tahun (maks 20 tahun) adalah usulan, belum ada di SK.
-        Tarif mengajar S2 Lektor Kepala diekstrapolasi Rp175.000 karena tidak tercantum di SK.
+        <b>Asumsi tetap:</b> 12 kelas × 16 pertemuan / 6 bulan = 32 pertemuan/bulan pada aturan
+        lama (baseline sama untuk semua tingkatan). Aturan baru: kuota pertemuan/bulan yang
+        dibayar dikunci per <b>Tingkatan</b> — Pimpinan 6 pertemuan/minggu (24/bulan), Staff/Dosen/
+        Dosen Tidak Tetap 4 pertemuan/minggu (16/bulan). Tarif &amp; honor homebase lama dari SK
+        001/SK/11/UTR/X/2021, ditentukan oleh Jabatan Fungsional. Dosen &gt;3 tahun mengabdi dapat
+        kenaikan persentase penuh (dihitung dari total take-home pay); ≤3 tahun hanya take-home
+        impas. Premi masa kerja Rp50.000/tahun (maks 20 tahun) adalah usulan, belum ada di SK.
+        <b> Dosen Tidak Tetap diasumsikan tidak mendapat homebase, premi, maupun kenaikan %</b> —
+        murni dibayar per pertemuan sesuai kuota tingkatannya; koreksi asumsi ini jika berbeda
+        dengan kontrak sebenarnya. Tarif mengajar S2 Lektor Kepala diekstrapolasi Rp175.000
+        karena tidak tercantum di SK.
       </p>
     </div>
   );
