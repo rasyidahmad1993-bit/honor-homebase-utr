@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Honor Homebase UTR",
-  description: "Kalkulator & database honor homebase dosen struktural Universitas Tangerang Raya",
+  title: "Penentuan Honor Dosen Tetap",
+  description: "Kalkulator & database honor homebase dosen tetap Universitas Tangerang Raya",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

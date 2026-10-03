@@ -106,7 +106,7 @@ export default function Page() {
   return (
     <div className="wrap">
       <div>
-        <h1>Honor Homebase UTR</h1>
+        <h1>Penentuan Honor Dosen Tetap</h1>
         <p className="sub">
           Database dosen struktural & kalkulator honor homebase semester depan (24 pertemuan/bulan dikunci,
           honor mengajar yang berkurang dialihkan ke homebase, ditambah kenaikan untuk &gt;3 tahun mengabdi
