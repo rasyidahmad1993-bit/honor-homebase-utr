@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createDosen, listDosen } from "@/lib/db";
 import { Jabatan, Pendidikan } from "@/lib/calc";
 
-const JABATAN_VALUES: Jabatan[] = ["AA", "Lektor", "LK", "Prof"];
+const JABATAN_VALUES: Jabatan[] = ["TP", "AA", "Lektor", "LK", "Prof"];
 const PENDIDIKAN_VALUES: Pendidikan[] = ["S2", "S3"];
 
 export async function GET() {

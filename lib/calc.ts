@@ -3,14 +3,16 @@
 // Tarif S2 Lektor Kepala tidak tercantum di SK — diekstrapolasi (lihat catatan di bawah).
 
 export type Pendidikan = "S2" | "S3";
-export type Jabatan = "AA" | "Lektor" | "LK" | "Prof";
+export type Jabatan = "TP" | "AA" | "Lektor" | "LK" | "Prof";
 
 export interface TarifRow {
   tarif: number; // Rp per pertemuan (S1)
   hbLama: number; // honor homebase lama, Rp/bulan
 }
 
+// Urutan di sini menentukan urutan tampil di dropdown (TP = jabatan fungsional paling rendah).
 export const JABATAN_LABEL: Record<Jabatan, string> = {
+  TP: "Tenaga Pengajar",
   AA: "Asisten Ahli",
   Lektor: "Lektor",
   LK: "Lektor Kepala",
@@ -18,9 +20,11 @@ export const JABATAN_LABEL: Record<Jabatan, string> = {
 };
 
 export const TARIF: Record<string, TarifRow> = {
+  "S2|TP": { tarif: 100000, hbLama: 0 }, // SK: honor homebase S2 Tenaga Pengajar "-" (nol)
   "S2|AA": { tarif: 125000, hbLama: 500000 },
   "S2|Lektor": { tarif: 150000, hbLama: 1500000 },
   "S2|LK": { tarif: 175000, hbLama: 2000000 }, // diekstrapolasi, tidak ada di SK
+  "S3|TP": { tarif: 150000, hbLama: 500000 },
   "S3|AA": { tarif: 175000, hbLama: 1500000 },
   "S3|Lektor": { tarif: 200000, hbLama: 2500000 },
   "S3|LK": { tarif: 225000, hbLama: 3000000 },

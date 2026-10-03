@@ -4,7 +4,7 @@ export interface DosenRow {
   id: number;
   nama: string;
   pendidikan: "S2" | "S3";
-  jabatan: "AA" | "Lektor" | "LK" | "Prof";
+  jabatan: "TP" | "AA" | "Lektor" | "LK" | "Prof";
   tahun_mengabdi: number;
   created_at: string;
 }
@@ -32,11 +32,14 @@ export async function ensureSchema() {
       id SERIAL PRIMARY KEY,
       nama TEXT NOT NULL,
       pendidikan TEXT NOT NULL CHECK (pendidikan IN ('S2','S3')),
-      jabatan TEXT NOT NULL CHECK (jabatan IN ('AA','Lektor','LK','Prof')),
+      jabatan TEXT NOT NULL CHECK (jabatan IN ('TP','AA','Lektor','LK','Prof')),
       tahun_mengabdi INTEGER NOT NULL CHECK (tahun_mengabdi >= 0),
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
   `;
+  // Migrasi untuk database yang sudah ada sebelum jabatan "TP" ditambahkan.
+  await sql`ALTER TABLE dosen DROP CONSTRAINT IF EXISTS dosen_jabatan_check;`;
+  await sql`ALTER TABLE dosen ADD CONSTRAINT dosen_jabatan_check CHECK (jabatan IN ('TP','AA','Lektor','LK','Prof'));`;
   initialized = true;
 }
 
@@ -54,7 +57,7 @@ export async function listDosen(): Promise<DosenRow[]> {
 export async function createDosen(data: {
   nama: string;
   pendidikan: "S2" | "S3";
-  jabatan: "AA" | "Lektor" | "LK" | "Prof";
+  jabatan: "TP" | "AA" | "Lektor" | "LK" | "Prof";
   tahunMengabdi: number;
 }): Promise<DosenRow> {
   await ensureSchema();
