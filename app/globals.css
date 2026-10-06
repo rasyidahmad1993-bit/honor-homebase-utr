@@ -108,10 +108,25 @@ button {
 
 .btn-ghost {
   background: transparent;
-  color: var(--bad);
+  color: var(--ink-dim);
+  border: 1px solid var(--border);
   padding: 6px 10px;
   font-size: 0.82rem;
+  border-radius: 9px;
 }
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.pill-draft { background: color-mix(in srgb, #b45a09 15%, var(--surface)); color: #b45a09; }
+.pill-approved { background: color-mix(in srgb, var(--good) 15%, var(--surface)); color: var(--good); }
 
 .error-box {
   background: color-mix(in srgb, var(--bad) 12%, var(--surface));

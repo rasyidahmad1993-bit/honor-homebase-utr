@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createDosen, listDosen } from "@/lib/db";
+import { createDosen, listDosen, logAudit } from "@/lib/db";
 import { Jabatan, Pendidikan, Tingkatan } from "@/lib/calc";
+import { getSession } from "@/lib/auth";
 
 const JABATAN_VALUES: Jabatan[] = ["TP", "AA", "Lektor", "LK", "Prof"];
 const PENDIDIKAN_VALUES: Pendidikan[] = ["S2", "S3"];
 const TINGKATAN_VALUES: Tingkatan[] = ["Pimpinan", "Staff", "Dosen", "DosenTidakTetap"];
 
 export async function GET() {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Belum login." }, { status: 401 });
+
   try {
     const data = await listDosen();
     return NextResponse.json({ data });
@@ -20,6 +24,10 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Belum login." }, { status: 401 });
+  if (session.role !== "admin") return NextResponse.json({ error: "Hanya admin yang boleh menambah data." }, { status: 403 });
+
   try {
     const body = await req.json();
     const nama = String(body.nama ?? "").trim();
@@ -50,7 +58,14 @@ export async function POST(req: NextRequest) {
       jabatan,
       tingkatan,
       tahunMengabdi,
+      jabatanStruktural: tingkatan === "Pimpinan" ? String(body.jabatanStruktural ?? "") : null,
+      unitKerja: tingkatan === "Staff" ? String(body.unitKerja ?? "") : null,
+      hariHadir: tingkatan === "Staff" ? Number(body.hariHadir ?? 20) : null,
+      jumlahKelas: tingkatan === "Dosen" || tingkatan === "DosenTidakTetap" ? Number(body.jumlahKelas ?? 6) : null,
     });
+
+    await logAudit(session.email, "create_dosen", row.id, { nama: row.nama });
+
     return NextResponse.json({ data: row }, { status: 201 });
   } catch (err) {
     console.error(err);
